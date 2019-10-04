@@ -3,52 +3,44 @@ set -e
 
 
 echo "Install config."
-if [ ! -d "/usr/share/snips/config" ]; then
+if [ ! -d "/usr/share/hermes/config" ]; then
   echo "Install default config."
-  mkdir /usr/share/snips/config
-  cp -R -f /config /usr/share/snips
+  mkdir /usr/share/hermes/config
+  cp -R -f /config /usr/share/hermes
 fi
-chmod -R 777 /usr/share/snips/config
+chmod -R 777 /usr/share/hermes/config
 
 rm -f /etc/asound.conf
-cp -f /usr/share/snips/config/asound.conf /etc/asound.conf
+cp -f /usr/share/hermes/config/asound.conf /etc/asound.conf
 
 
-echo "Install skills."
-if [ ! -d "/usr/share/snips/skills" ]; then
-  echo "Install default skills."
-  mkdir /usr/share/snips/skills
-  cp -R -f /skills /usr/share/snips
+echo "Install scripts."
+if [ ! -d "/usr/share/hermes/scripts" ]; then
+  echo "Install default scripts."
+  mkdir /usr/share/hermes/scripts
+  cp -R -f /scripts /usr/share/hermes
 fi
-chmod -R 777 /usr/share/snips/skills
-
-if [ -d /usr/share/snips/config ]; then
-	echo "use shared config."
-	rm -f /etc/snips.toml
-	cp -f /usr/share/snips/config/snips.toml /etc/snips.toml
-	chmod -R 777 /etc/snips.toml
-fi
+chmod -R 777 /usr/share/hermes/scripts
 
 #go back to root directory
 cd /
 
-echo "Start snips services"
+echo "Player "
+hermes-audio-player --version
+echo "Recorder "
+hermes-audio-recorder --version
+
+echo "Start server"
 
 chmod -R 777 /var/log
 
-#start the snips audio server 
-snips-audio-server --hijack localhost:64321 2> /var/log/snips-audio-server.log &
-snips_audio_server_pid=$!
+hermes-audio-player --config /usr/share/hermes/config/hermes-audio-server.json 2> /var/log/audio-player.log &
+audio_player_pid=$!
 
-echo "snips services started.. check logs"
+hermes-audio-recorder --config /usr/share/hermes/config/hermes-audio-server.json 2> /var/log/audio-recorder.log &
+audio_recorder_pid=$!
 
-echo "Start homestation skill"
-cd /usr/share/snips/skills
-nohup python3 -u listener.py 2> /var/log/listener.log &
-snips_listener_pid=$!
+echo "services started.. check logs"
 
-
-echo "running ok"
-
-wait "$snips_audio_server_pid"
+wait "$audio_player_pid"
 
